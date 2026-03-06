@@ -22,10 +22,9 @@ from scipy.stats import norm, gaussian_kde
 import figure_scale as fs
 
 #%%################# INPUTS ####################
-path_to_save = r'C:\Users\oehli\OneDrive - Insper - Instituto de Ensino e Pesquisa\Outros\Predocs\aaa'
-path_to_data = r'C:\Users\oehli\OneDrive - Insper - Instituto de Ensino e Pesquisa\TCC\Dados/FMB/Fama-MacBeth.xlsx'
-sheet_name_data = 'AÇÕES'
-#sheet_name_data = 'AÇÕES MES'
+path_to_save = r'\Figures'
+path_to_data = r'\Fama-MacBeth_Returns.xlsx'
+sheet_name_data = 'QoQ returns' # or 'MoM returns' for the monthly returns
 
 #%%################# FUNCTIONS ####################
 
@@ -164,8 +163,12 @@ for model in range(1,5):
                     pvalues_df.loc[stock] = results.pvalues[1:] # P-values
                     ses_df.loc[stock] = results.mse_resid ** 0.5 # Standard errors
                     obs_df.loc[stock] = results.nobs # Number of observations
-                    
-            observations_timeseries_reg = pd.concat([observations_timeseries_reg, obs_df.rename(d)], axis=1) 
+            
+            # Save the number of observations of the time series regressions
+            if not observations_timeseries_reg.empty:      
+                observations_timeseries_reg = pd.concat([observations_timeseries_reg, obs_df.rename(d)], axis=1) 
+            else:
+                observations_timeseries_reg = obs_df.rename(d)
 
             # Treat the coefficients dataframe to be used as regressors in the cross section regression
             coefs_df = pd.concat([coefs_df, ses_df.rename('Standard Error')], axis=1) # Add standard errors to the coefficients dataframe as it will be used as a regressor
@@ -224,12 +227,16 @@ for model in range(1,5):
     # Settings
     line_width = 0.7
     standard_figure_fromatting(figure_width = 80)
-    lower_limit=0
-    upper_limit=80
-    steps=10
-    #lower_limit=0
-    #upper_limit=240
-    #steps=30
+    if sheet_name_data == 'QoQ returns':
+        lower_limit=0
+        upper_limit=80
+        steps=10
+    elif sheet_name_data=='MoM returns':
+        lower_limit=0
+        upper_limit=240
+        steps=30
+    else:
+        print('Error with the sheet name')
 
     # Ploting
     for col in observations_timeseries_reg.columns:
@@ -251,8 +258,12 @@ standard_figure_fromatting(figure_width = 160)
 lower_limit=0
 upper_limit=350
 steps=50
-legend_location = 'lower left'
-#legend_location = 'lower right'
+if sheet_name_data == 'QoQ returns':
+    legend_location = 'lower left'
+elif sheet_name_data=='MoM returns':
+    legend_location = 'lower right'
+else:
+    print('Error with the sheet name')
 
 # Ploting
 plt.figure()
@@ -273,3 +284,4 @@ plt.yticks(range(lower_limit,upper_limit+steps,steps))
 plt.legend(['CAPM','FF3','FF5','FF5+Mom'], loc=legend_location)
 plt.ylabel('Observations')
 savefig(name = 'Cross Section Observations all models', path = path_to_save)
+
